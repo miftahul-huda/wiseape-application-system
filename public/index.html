@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Wiseape Application System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      // Controls are rendered with Tailwind utility classes. Preflight is
+      // disabled so Tailwind's base reset doesn't touch the desktop/dock/
+      // window chrome, which is styled by styles.css.
+      tailwind.config = {
+        corePlugins: {
+          preflight: false,
+        },
+      };
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script src="/controls/WiseControl.js"></script>
+    <script src="/controls/WiseLabel.js"></script>
+    <script src="/controls/WiseTextBox.js"></script>
+    <script src="/controls/WiseTextArea.js"></script>
+    <script src="/controls/WiseButton.js"></script>
+    <script src="/controls/WiseComboBox.js"></script>
+    <script src="/controls/WiseRadioGroup.js"></script>
+    <script src="/controls/WiseCheckboxGroup.js"></script>
+    <script src="/controls/WiseDate.js"></script>
+    <script src="/controls/WiseDateRange.js"></script>
+    <script src="/controls/WiseHtmlEditor.js"></script>
+    <script src="/controls/WiseFileUpload.js"></script>
+    <script src="/WiseDesktop.js"></script>
+    <script src="/WiseApplicationSystem.js"></script>
+    <script src="/script.js"></script>
+  </body>
+</html>
