@@ -1,7 +1,7 @@
 class WiseDesktop {
   constructor(root = null) {
     this.root = root;
-    this.apps = [];
+    this.menus = [];
     this.topBar = {
       left: ['Wiseape'],
       right: ['Battery 100%', 'Wi‑Fi', 'Tue 9:41'],
@@ -13,11 +13,14 @@ class WiseDesktop {
 
   // Builds the desktop snapshot and, in the browser (when a DOM `root` is
   // attached), renders it. Server-side callers only ever use the snapshot.
-  run(apps = []) {
-    this.apps = apps;
+  // `menus` is the (already role-filtered) menu tree: a mix of `group`
+  // nodes (folders, with `children`) and `item` nodes (link to an app via
+  // `appId`).
+  run(menus = []) {
+    this.menus = menus;
     this.windowStack = [];
 
-    const snapshot = this.buildSnapshot(apps);
+    const snapshot = this.buildSnapshot(menus);
 
     if (this.root) {
       this.renderDesktop();
@@ -26,17 +29,33 @@ class WiseDesktop {
     return snapshot;
   }
 
-  buildSnapshot(apps = []) {
+  buildSnapshot(menus = []) {
+    const leafItems = this.flattenMenuItems(menus);
     return {
       theme: this.theme,
-      apps,
+      menus,
       topBar: this.topBar,
-      dock: apps.map((app) => ({
-        id: app.appID,
-        title: app.appTitle,
-        icon: this.getAppIcon(app),
+      dock: leafItems.map((item) => ({
+        id: item.appId,
+        title: item.label,
+        icon: this.getAppIcon(item),
       })),
     };
+  }
+
+  // Recursively collects every `item` (leaf) node across a menu tree,
+  // depth-first, skipping `group` nodes themselves -- used for the dock
+  // (which never shows folders) and the top-level Launchpad view.
+  flattenMenuItems(nodes = []) {
+    const result = [];
+    nodes.forEach((node) => {
+      if (node.type === 'group') {
+        result.push(...this.flattenMenuItems(node.children || []));
+      } else {
+        result.push(node);
+      }
+    });
+    return result;
   }
 
   onApplicationIconClick(app) {
@@ -47,13 +66,19 @@ class WiseDesktop {
     };
   }
 
-  getAppIcon(app) {
-    return app.appIcon || app.appTitle.charAt(0).toUpperCase();
+  // Accepts either a menu node ({icon, label}) or a running application
+  // object ({appIcon, appTitle}, used by renderWindow/minimize) so callers
+  // don't need to normalize shapes before calling in.
+  getAppIcon(entity) {
+    const icon = entity.icon || entity.appIcon;
+    if (icon) return icon;
+    const label = entity.label || entity.appTitle || '';
+    return label.charAt(0).toUpperCase() || '◫';
   }
 
   // Renders a crisp, consistent SVG glyph for known app icon keys, falling
   // back to the raw character (e.g. a letter) for anything unmapped.
-  getIconMarkup(app) {
+  getIconMarkup(entity) {
     const icons = {
       '▣': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7.5" height="7.5" rx="1.5"></rect><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"></rect><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"></rect><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"></rect></svg>',
       '📁': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"></path></svg>',
@@ -62,7 +87,7 @@ class WiseDesktop {
       '🎛': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="5" x2="4" y2="19"></line><circle cx="4" cy="10" r="2" fill="currentColor" stroke="none"></circle><line x1="12" y1="5" x2="12" y2="19"></line><circle cx="12" cy="15" r="2" fill="currentColor" stroke="none"></circle><line x1="20" y1="5" x2="20" y2="19"></line><circle cx="20" cy="8" r="2" fill="currentColor" stroke="none"></circle></svg>',
     };
 
-    const key = this.getAppIcon(app);
+    const key = this.getAppIcon(entity);
     return icons[key] || `<span>${key}</span>`;
   }
 
@@ -135,34 +160,50 @@ class WiseDesktop {
     launchpadTrigger.className = 'dock-item launchpad-trigger';
     launchpadTrigger.title = 'Launchpad';
     launchpadTrigger.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="5" height="5" rx="1.2"></rect><rect x="9.5" y="3" width="5" height="5" rx="1.2"></rect><rect x="16" y="3" width="5" height="5" rx="1.2"></rect><rect x="3" y="9.5" width="5" height="5" rx="1.2"></rect><rect x="9.5" y="9.5" width="5" height="5" rx="1.2"></rect><rect x="16" y="9.5" width="5" height="5" rx="1.2"></rect><rect x="3" y="16" width="5" height="5" rx="1.2"></rect><rect x="9.5" y="16" width="5" height="5" rx="1.2"></rect><rect x="16" y="16" width="5" height="5" rx="1.2"></rect></svg>';
-    launchpadTrigger.addEventListener('click', () => this.openLaunchpad(root));
+    launchpadTrigger.addEventListener('click', () => this.openMenuOverlay(root, this.menus, 'Launchpad'));
     dock.appendChild(launchpadTrigger);
 
     const separator = document.createElement('div');
     separator.className = 'dock-separator';
     dock.appendChild(separator);
 
-    this.apps.forEach((app) => {
+    // Desktop grid: the top-level menu tree as-is (folders and items mixed).
+    this.menus.forEach((node) => {
       const handleClick = () => {
-        this.onApplicationIconClick(app);
+        if (node.type === 'group') {
+          this.openMenuOverlay(root, node.children || [], node.label, { showBack: true });
+          return;
+        }
+        this.onApplicationIconClick(node);
         if (typeof this.onIconClick === 'function') {
-          this.onIconClick(app);
+          this.onIconClick(node);
         }
       };
 
       const icon = document.createElement('div');
       icon.className = 'app-icon';
       icon.innerHTML = `
-        <div class="glyph">${this.getIconMarkup(app)}</div>
-        <div class="label">${app.appTitle}</div>
+        <div class="glyph">${this.getIconMarkup(node)}</div>
+        <div class="label">${node.label}</div>
       `;
       icon.addEventListener('click', handleClick);
       grid.appendChild(icon);
+    });
+
+    // Dock: every item (leaf) across the whole tree, flattened -- folders
+    // don't appear here, matching how a real dock has no concept of them.
+    this.flattenMenuItems(this.menus).forEach((item) => {
+      const handleClick = () => {
+        this.onApplicationIconClick(item);
+        if (typeof this.onIconClick === 'function') {
+          this.onIconClick(item);
+        }
+      };
 
       const dockItem = document.createElement('div');
       dockItem.className = 'dock-item';
-      dockItem.innerHTML = this.getIconMarkup(app);
-      dockItem.title = app.appTitle;
+      dockItem.innerHTML = this.getIconMarkup(item);
+      dockItem.title = item.label;
       dockItem.addEventListener('click', handleClick);
       dock.appendChild(dockItem);
     });
@@ -204,19 +245,20 @@ class WiseDesktop {
     });
   }
 
-  // Fullscreen overlay listing every installed app, opened from the
-  // Launchpad dock icon -- clicking an app launches it and closes the
-  // overlay; clicking the backdrop or pressing Escape just closes it.
-  openLaunchpad(root) {
-    if (root.querySelector('.launchpad-overlay')) return;
-
+  // Fullscreen overlay listing a set of menu nodes -- used both for the
+  // Launchpad (the whole top-level tree) and for a folder's contents (opened
+  // from the desktop grid or from within another overlay, which stacks a
+  // new overlay on top of the one already showing). Clicking an item
+  // launches its app and closes this overlay; clicking a nested folder
+  // opens another overlay on top. Clicking the backdrop or pressing Escape
+  // closes just the top overlay -- so does the Back button shown for folder
+  // views (`showBack: true`), since closing the top overlay is exactly what
+  // reveals whatever's underneath (the desktop, or the parent folder).
+  openMenuOverlay(root, items, title, { showBack = false } = {}) {
     const overlay = document.createElement('div');
     overlay.className = 'launchpad-overlay';
 
-    const gridWrap = document.createElement('div');
-    gridWrap.className = 'launchpad-grid';
-
-    const closeLaunchpad = () => {
+    const closeOverlay = () => {
       overlay.style.opacity = '0';
       gridWrap.style.transform = 'scale(0.94)';
       overlay.addEventListener('transitionend', () => overlay.remove(), { once: true });
@@ -224,28 +266,55 @@ class WiseDesktop {
     };
 
     const onKeydown = (event) => {
-      if (event.key === 'Escape') closeLaunchpad();
+      if (event.key === 'Escape') closeOverlay();
     };
 
-    this.apps.forEach((app) => {
+    if (showBack) {
+      const back = document.createElement('button');
+      back.type = 'button';
+      back.className = 'launchpad-back';
+      back.textContent = '← Back';
+      back.addEventListener('click', (event) => {
+        event.stopPropagation();
+        closeOverlay();
+      });
+      overlay.appendChild(back);
+    }
+
+    if (title) {
+      const heading = document.createElement('div');
+      heading.className = 'launchpad-title';
+      heading.textContent = title;
+      overlay.appendChild(heading);
+    }
+
+    const gridWrap = document.createElement('div');
+    gridWrap.className = 'launchpad-grid';
+
+    (items || []).forEach((node) => {
       const item = document.createElement('div');
       item.className = 'launchpad-app';
       item.innerHTML = `
-        <div class="glyph">${this.getIconMarkup(app)}</div>
-        <div class="label">${app.appTitle}</div>
+        <div class="glyph">${this.getIconMarkup(node)}</div>
+        <div class="label">${node.label}</div>
       `;
-      item.addEventListener('click', () => {
-        this.onApplicationIconClick(app);
-        if (typeof this.onIconClick === 'function') {
-          this.onIconClick(app);
+      item.addEventListener('click', (event) => {
+        event.stopPropagation();
+        if (node.type === 'group') {
+          this.openMenuOverlay(root, node.children || [], node.label, { showBack: true });
+          return;
         }
-        closeLaunchpad();
+        this.onApplicationIconClick(node);
+        if (typeof this.onIconClick === 'function') {
+          this.onIconClick(node);
+        }
+        closeOverlay();
       });
       gridWrap.appendChild(item);
     });
 
     overlay.addEventListener('click', (event) => {
-      if (event.target === overlay) closeLaunchpad();
+      if (event.target === overlay) closeOverlay();
     });
 
     overlay.appendChild(gridWrap);

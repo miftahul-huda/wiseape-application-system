@@ -3,6 +3,7 @@ const isServer = typeof window === 'undefined';
 let path;
 let ApiAppRepository;
 let ApiThemeRepository;
+let ApiMenuRepository;
 let WiseApplication;
 let ServerWiseDesktop;
 
@@ -10,6 +11,7 @@ if (isServer) {
   path = require('path');
   ApiAppRepository = require('./ApiAppRepository');
   ApiThemeRepository = require('./ApiThemeRepository');
+  ApiMenuRepository = require('./ApiMenuRepository');
   WiseApplication = require('./WiseApplication');
   ServerWiseDesktop = require('./WiseDesktop');
 }
@@ -17,6 +19,7 @@ if (isServer) {
 class WiseApplicationSystem {
   constructor(options = {}) {
     this.apps = [];
+    this.menus = [];
     this.desktop = null;
     this.runningApplications = new Map();
     this.themes = [];
@@ -31,6 +34,7 @@ class WiseApplicationSystem {
     if (isServer) {
       this.repository = new ApiAppRepository(options.api || {});
       this.themeRepository = new ApiThemeRepository(options.api || {});
+      this.menuRepository = new ApiMenuRepository(options.api || {});
     } else {
       this.root = options.root || null;
     }
@@ -39,32 +43,50 @@ class WiseApplicationSystem {
   async run(user = null) {
     await this.loadApplications();
     await this.loadThemes();
+    await this.loadMenus();
 
     const DesktopClass = isServer ? ServerWiseDesktop : WiseDesktop;
     this.desktop = isServer ? new DesktopClass() : new DesktopClass(this.root);
 
     if (!isServer) {
-      this.desktop.onIconClick = (app) => this.runApplication(app.appID);
+      this.desktop.onIconClick = (menuItem) => this.runApplication(menuItem.appId);
     }
 
     this.desktop.applyTheme(this.getActiveTheme());
     this.desktop.applyBackgroundImage(this.backgroundImage);
 
-    // The full catalog (this.apps) stays intact -- runApplication and the
-    // /api/apps route both need every app, admin included, regardless of
-    // who's asking (AppAdmin.run() itself enforces the role check). Only
-    // the dock/launchpad rendering is filtered per-viewer.
-    const visibleApps = (!user || user.role !== 'admin')
-      ? this.apps.filter((app) => app.appID !== 'admin')
-      : this.apps;
+    // The full catalog (this.apps/this.menus) stays intact -- runApplication
+    // and the /api/apps route both need every app, admin included, regardless
+    // of who's asking (AppAdmin.run() itself enforces the role check). Only
+    // the desktop/dock rendering is filtered per-viewer.
+    const visibleMenus = this.filterMenusForUser(this.menus, user);
 
-    const desktopResult = this.desktop.run(visibleApps);
+    const desktopResult = this.desktop.run(visibleMenus);
 
     return {
       system: this.systemConfig,
       apps: this.apps,
+      menus: this.menus,
       desktop: desktopResult,
     };
+  }
+
+  // Drops the admin menu item (and any group left empty once it's dropped)
+  // for non-admin viewers. Groups/items are otherwise passed through as-is.
+  filterMenusForUser(menus, user) {
+    const isAdmin = !!user && user.role === 'admin';
+
+    const filterNode = (node) => {
+      if (node.type === 'group') {
+        const children = (node.children || []).map(filterNode).filter(Boolean);
+        if (children.length === 0) return null;
+        return { ...node, children };
+      }
+      if (!isAdmin && node.appId === 'admin') return null;
+      return node;
+    };
+
+    return (menus || []).map(filterNode).filter(Boolean);
   }
 
   async loadThemes() {
@@ -85,6 +107,20 @@ class WiseApplicationSystem {
     }
 
     return this.themes;
+  }
+
+  async loadMenus() {
+    if (isServer) {
+      this.menus = await this.menuRepository.listMenus();
+    } else {
+      const response = await fetch('/api/menus');
+      if (!response.ok) {
+        throw new Error('Failed to fetch menu list');
+      }
+      this.menus = await response.json();
+    }
+
+    return this.menus;
   }
 
   getActiveTheme() {

@@ -73,6 +73,10 @@ async function start() {
     res.json(system.getSystemSnapshot().apps);
   });
 
+  app.get('/api/menus', (req, res) => {
+    res.json(system.menus);
+  });
+
   app.get('/api/themes', (req, res) => {
     res.json({
       themes: system.themes,

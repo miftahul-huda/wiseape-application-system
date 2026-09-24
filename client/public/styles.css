@@ -210,6 +210,40 @@ body {
   padding: 40px;
 }
 
+.launchpad-title {
+  position: absolute;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: white;
+  font-size: 18px;
+  font-weight: 600;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+
+.launchpad-back {
+  position: absolute;
+  top: 32px;
+  left: 40px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.14);
+  color: white;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.launchpad-back:hover {
+  background: rgba(255,255,255,0.24);
+}
+
 .launchpad-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, 100px);
@@ -218,6 +252,9 @@ body {
   align-content: center;
   max-width: 900px;
   max-height: 100%;
+  /* Top/side padding gives the hover-grow glyph (translateY + scale) room
+     so it doesn't get clipped by this container's own overflow. */
+  padding: 16px 10px 10px;
   overflow-y: auto;
   transform: scale(0.94);
   transition: transform 0.25s var(--spring);

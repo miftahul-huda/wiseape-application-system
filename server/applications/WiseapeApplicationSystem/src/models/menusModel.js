@@ -48,9 +48,26 @@ async function ensureSchema() {
   schemaReady = true;
 }
 
+let adminMenuSeeded = false;
+
+async function ensureAdminMenuSeeded() {
+  if (adminMenuSeeded) return;
+
+  const existing = await db.query('SELECT 1 FROM wiseape_menus WHERE app_id = $1', ['admin']);
+  if (existing.rowCount === 0) {
+    await db.query(
+      `INSERT INTO wiseape_menus (parent_id, menu_type, label, icon, app_id, sort_order)
+       VALUES (NULL, 'item', 'Admin', NULL, 'admin', 2)`
+    );
+  }
+
+  adminMenuSeeded = true;
+}
+
 async function listMenus() {
   try {
     await ensureSchema();
+    await ensureAdminMenuSeeded();
     const result = await db.query(
       `SELECT menu_id AS id, parent_id AS "parentId", menu_type AS type, label, icon, app_id AS "appId", sort_order AS "sortOrder"
        FROM wiseape_menus
