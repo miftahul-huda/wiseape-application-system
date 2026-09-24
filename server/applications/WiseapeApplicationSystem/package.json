@@ -1,0 +1,23 @@
+{
+  "name": "wiseape-application-system-server",
+  "version": "1.0.0",
+  "description": "Wiseape Application System (WAS) REST API server",
+  "main": "app.js",
+  "scripts": {
+    "start": "node --env-file=.env app.js",
+    "dev": "node --watch --env-file=.env app.js"
+  },
+  "keywords": [
+    "wiseape",
+    "rest-api",
+    "node",
+    "postgresql"
+  ],
+  "author": "Wiseape",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "pg": "^8.14.0"
+  }
+}

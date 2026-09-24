@@ -1,0 +1,491 @@
+:root {
+  --bg1: #dfe6f3;
+  --bg2: #c3cedf;
+  --glass: rgba(255, 255, 255, 0.18);
+  --panel: rgba(28, 30, 34, 0.72);
+  --taskbar: rgba(20, 22, 28, 0.55);
+  --text: #f5f7fb;
+  --dark-text: #111827;
+  --accent: #0082fa;
+  --accent-dark: #0064c4;
+  --shadow: rgba(15, 23, 42, 0.25);
+  --desktop-image: none;
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, var(--bg1), var(--bg2));
+  color: var(--dark-text);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+.desktop {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  background-image: var(--desktop-image),
+                     radial-gradient(circle at 20% 20%, rgba(255,255,255,0.35), transparent 28%),
+                     linear-gradient(120deg, var(--bg1) 0%, #e7e8ec 28%, var(--bg2) 100%);
+  background-size: cover, auto, auto;
+  background-position: center, center, center;
+  background-repeat: no-repeat, no-repeat, no-repeat;
+  transition: background-image 0.4s ease;
+}
+
+.desktop-wallpaper {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(75, 103, 168, 0.32), rgba(150, 187, 228, 0.08));
+}
+
+.topbar {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(94vw, 900px);
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.28);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  box-shadow: 0 8px 24px rgba(15,23,42,0.12), inset 0 0 0 1px rgba(255,255,255,0.35);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 8px 0 16px;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(17,24,39,0.85);
+  z-index: 2;
+}
+
+.topbar .left, .topbar .right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.topbar .right span {
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.4);
+}
+
+.topbar .right .logout-item {
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.topbar .right .logout-item:hover {
+  background: rgba(255,255,255,0.6);
+}
+
+.app-grid {
+  position: absolute;
+  top: 68px;
+  left: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  z-index: 2;
+}
+
+.app-icon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 76px;
+  color: white;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.35);
+  cursor: pointer;
+}
+
+.app-icon .glyph {
+  width: 58px;
+  height: 58px;
+  border-radius: 22%;
+  background: var(--accent);
+  box-shadow: 0 6px 14px -4px rgba(0,0,0,0.28);
+  transition: background 0.4s ease, transform 0.22s var(--spring), box-shadow 0.22s ease;
+  display: grid;
+  place-items: center;
+  font-size: 27px;
+  font-weight: 700;
+}
+
+.app-icon:hover .glyph {
+  transform: translateY(-4px) scale(1.06);
+  box-shadow: 0 10px 18px -4px rgba(0,0,0,0.32);
+}
+
+.glyph svg {
+  width: 28px;
+  height: 28px;
+  color: white;
+}
+
+.app-icon .label {
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.taskbar {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  width: auto;
+  max-width: min(92vw, 820px);
+  height: 68px;
+  border-radius: 18px;
+  background: var(--taskbar);
+  box-shadow: 0 16px 40px rgba(15,23,42,0.4), inset 0 0 0 1px rgba(255,255,255,0.08);
+  backdrop-filter: blur(26px) saturate(1.6);
+  -webkit-backdrop-filter: blur(26px) saturate(1.6);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 12px;
+  padding: 8px 14px;
+  z-index: 5;
+  transition: width 0.16s var(--spring);
+}
+
+.dock-item {
+  width: 50px;
+  height: 50px;
+  flex: none;
+  border-radius: 22%;
+  background: rgba(255,255,255,0.14);
+  border: 1px solid rgba(255,255,255,0.12);
+  display: grid;
+  place-items: center;
+  color: white;
+  font-weight: 700;
+  font-size: 20px;
+  cursor: pointer;
+  transition: width 0.16s var(--spring), height 0.16s var(--spring), background 0.2s ease;
+}
+
+.dock-item:hover {
+  background: rgba(255,255,255,0.22);
+}
+
+.dock-item svg {
+  width: 48%;
+  height: 48%;
+  color: white;
+  transition: width 0.16s var(--spring), height 0.16s var(--spring);
+}
+
+.dock-separator {
+  width: 1px;
+  height: 36px;
+  flex: none;
+  align-self: center;
+  background: rgba(255,255,255,0.22);
+}
+
+.launchpad-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 17, 23, 0.55);
+  backdrop-filter: blur(40px) saturate(1.6);
+  -webkit-backdrop-filter: blur(40px) saturate(1.6);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.25s var(--spring);
+  padding: 40px;
+}
+
+.launchpad-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, 100px);
+  gap: 30px 24px;
+  justify-content: center;
+  align-content: center;
+  max-width: 900px;
+  max-height: 100%;
+  overflow-y: auto;
+  transform: scale(0.94);
+  transition: transform 0.25s var(--spring);
+}
+
+.launchpad-app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  color: white;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+
+.launchpad-app .glyph {
+  width: 64px;
+  height: 64px;
+  border-radius: 22%;
+  background: var(--accent);
+  box-shadow: 0 6px 14px -4px rgba(0,0,0,0.28);
+  display: grid;
+  place-items: center;
+  font-size: 28px;
+  transition: transform 0.18s var(--spring);
+}
+
+.launchpad-app .glyph svg {
+  width: 30px;
+  height: 30px;
+  color: white;
+}
+
+.launchpad-app:hover .glyph {
+  transform: translateY(-4px) scale(1.06);
+}
+
+.launchpad-app .label {
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+}
+
+.window {
+  position: absolute;
+  background: rgba(255,255,255,0.72);
+  border: 1px solid rgba(15,23,42,0.1);
+  border-radius: 14px;
+  box-shadow: 0 30px 60px -12px rgba(15,23,42,0.35), 0 0 0 1px rgba(255,255,255,0.4) inset;
+  overflow: hidden;
+  backdrop-filter: blur(28px) saturate(1.5);
+  -webkit-backdrop-filter: blur(28px) saturate(1.5);
+  transition: opacity 0.22s var(--spring), transform 0.22s var(--spring);
+}
+
+.window-header {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px 0 14px;
+  background: rgba(255,255,255,0.25);
+  border-bottom: 1px solid rgba(15,23,42,0.06);
+  cursor: grab;
+}
+
+.window-header:active {
+  cursor: grabbing;
+}
+
+.resize-handle {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 16px;
+  height: 16px;
+  cursor: nwse-resize;
+  background: linear-gradient(135deg, transparent 50%, rgba(15,23,42,0.28) 50%);
+}
+
+.window-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.window-action {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 11px;
+  line-height: 1;
+  color: rgba(0,0,0,0.55);
+  transition: transform 0.15s ease;
+}
+
+.window-action:hover {
+  transform: scale(1.15);
+}
+
+.window-action.close { background: #ff5f57; }
+.window-action.minimize { background: #ffbd2e; }
+.window-action.maximize { background: #28c840; }
+
+.window-title {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  color: rgba(17,24,39,0.8);
+  font-weight: 600;
+}
+
+.window-title svg {
+  width: 14px;
+  height: 14px;
+  color: rgba(17,24,39,0.7);
+}
+
+.window-body {
+  padding: 20px;
+  background: rgba(255,255,255,0.22);
+  min-height: 200px;
+  height: calc(100% - 40px);
+  overflow-y: auto;
+  color: var(--dark-text);
+}
+
+.window-body h2 {
+  margin-top: 0;
+  font-size: 24px;
+}
+
+.app-shell {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+/* Controls (labels, inputs, buttons, ...) are styled with Tailwind utility
+   classes directly in system/controls/*.js -- see index.html for the
+   Tailwind CDN setup. This stylesheet only covers the desktop/dock/window
+   chrome around them. */
+
+.auth-screen {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 20% 20%, rgba(255,255,255,0.35), transparent 28%),
+              linear-gradient(120deg, var(--bg1) 0%, #e7e8ec 28%, var(--bg2) 100%);
+}
+
+.auth-card {
+  width: min(90vw, 360px);
+  padding: 32px 28px;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.5);
+  backdrop-filter: blur(28px) saturate(1.5);
+  -webkit-backdrop-filter: blur(28px) saturate(1.5);
+  box-shadow: 0 30px 60px -12px rgba(15,23,42,0.35), 0 0 0 1px rgba(255,255,255,0.4) inset;
+}
+
+.auth-title {
+  margin: 0 0 20px;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--dark-text);
+  text-align: center;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(17,24,39,0.75);
+}
+
+.auth-field input {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(15,23,42,0.12);
+  background: rgba(255,255,255,0.75);
+  font-size: 14px;
+  color: var(--dark-text);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.auth-field input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(0,130,250,0.18);
+}
+
+.auth-submit {
+  margin-top: 4px;
+  padding: 11px;
+  border: none;
+  border-radius: 10px;
+  background: var(--accent);
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.auth-submit:hover {
+  background: var(--accent-dark);
+}
+
+.auth-submit:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.auth-error {
+  min-height: 0;
+  font-size: 13px;
+  color: #b91c1c;
+  margin-bottom: 4px;
+}
+
+.auth-error:empty {
+  display: none;
+}
+
+.auth-info {
+  min-height: 0;
+  font-size: 13px;
+  color: #166534;
+  margin-bottom: 4px;
+}
+
+.auth-info:empty {
+  display: none;
+}
+
+.auth-switch {
+  margin: 18px 0 0;
+  text-align: center;
+  font-size: 13px;
+  color: rgba(17,24,39,0.7);
+}
+
+.auth-switch a {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-switch a:hover {
+  text-decoration: underline;
+}

@@ -1,0 +1,20 @@
+{
+  "name": "wiseape-application-system",
+  "version": "1.0.0",
+  "description": "Wiseape Application System (WAS) desktop application",
+  "main": "app.js",
+  "scripts": {
+    "start": "node --env-file=.env app.js",
+    "dev": "node --watch --env-file=.env app.js"
+  },
+  "keywords": [
+    "wiseape",
+    "desktop",
+    "node"
+  ],
+  "author": "Wiseape",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
